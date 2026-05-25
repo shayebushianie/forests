@@ -1,0 +1,19 @@
+# 编译生成的文件
+debug/
+release/
+*.o
+*.exe
+Makefile
+Makefile.Debug
+Makefile.Release
+*.qmake.stash
+
+# 编辑器配置
+.vscode/
+
+# Qt 临时文件
+*.user
+*.stash
+
+# 数据库文件（成员3生成）
+*.db
