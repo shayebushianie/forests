@@ -1,53 +1,75 @@
 # 成员2 - 植物系统模块
 
 ## 项目结构
-forest_plant/
+member2_plant_module/
 ├── include/
-│ ├── DatabaseCommon.h # 成员3：数据存储公共定义
-│ ├── DatabaseManager.h # 成员3：数据库管理器
-│ └── plant/ # 成员2：植物系统
-│ ├── AbstractPlant.h # 植物抽象基类
-│ ├── Tree.h # 树类（第二层）
-│ ├── Flower.h # 花类（第二层）
-│ ├── OakTree.h # 橡树（第三层）
-│ ├── PineTree.h # 松树（第三层）
-│ ├── Rose.h # 玫瑰（第三层）
-│ ├── Sunflower.h # 向日葵（第三层）
-│ └── PlantFactory.h # 植物工厂
+│ ├── plant/ # 植物继承体系
+│ │ ├── AbstractPlant.h # 抽象基类
+│ │ ├── Tree.h # 树类（第二层）
+│ │ ├── Flower.h # 花类（第二层）
+│ │ ├── OakTree.h # 橡树
+│ │ ├── PineTree.h # 松树
+│ │ ├── Rose.h # 玫瑰
+│ │ ├── Sunflower.h # 向日葵
+│ │ └── PlantFactory.h # 植物工厂
+│ └── controller/
+│ └── FocusController.h # 专注控制器
 ├── src/
-│ ├── DatabaseManager.cpp # 成员3：数据库管理器实现
-│ └── plant/ # 成员2：植物系统实现
-│ ├── AbstractPlant.cpp
-│ ├── Tree.cpp
-│ ├── Flower.cpp
-│ ├── OakTree.cpp
-│ ├── PineTree.cpp
-│ ├── Rose.cpp
-│ ├── Sunflower.cpp
-│ └── PlantFactory.cpp
+│ ├── plant/ # 植物实现
+│ └── controller/
+│ └── FocusController.cpp # 控制器实现
 ├── forest_plant.pro # Qt 项目文件
 ├── main.cpp # 测试入口
-└── .gitignore
+└── README.md
+
+
+## 核心功能
+
+### 1. 植物继承体系（多态）
+
+| 层级 | 类名 | 说明 |
+|------|------|------|
+| 第一层 | `AbstractPlant` | 抽象基类，定义纯虚接口 |
+| 第二层 | `Tree` / `Flower` | 树的生长周期更长，花更快成熟 |
+| 第三层 | `OakTree` / `PineTree` / `Rose` / `Sunflower` | 具体植物，实现图片路径和阶段描述 |
+
+### 2. 专注控制器（状态机）
+IDLE → FOCUSING → SUCCESS（成功，植物生长）
+↘ FAILED（失败/作弊，植物枯萎）
+
 
 
 ## 接口说明
 
 ### 供成员1（UI）调用
 
-| 方法 | 说明 |
-|------|------|
-| `PlantFactory::createPlant(typeName)` | 创建植物对象 |
-| `plant->getImagePath()` | 获取当前阶段图片路径 |
-| `plant->getProgress()` | 获取生长进度 (0-100) |
-| `plant->getStageDescription()` | 获取阶段描述 |
-| `plant->getDisplayName()` | 获取显示名称 |
+```cpp
+// 创建植物
+AbstractPlant* plant = PlantFactory::createPlant("OakTree");
+
+// 开始专注
+FocusController controller;
+controller.startFocus(minutes, plant);
+
+// 连接信号（接收状态更新）
+connect(&controller, &FocusController::tick, this, &UI::updateTimer);
+connect(&controller, &FocusController::plantUpdated, this, &UI::updatePlantImage);
+connect(&controller, &FocusController::stateChanged, this, &UI::onStateChanged);|
 
 ### 供成员3（数据存储）调用
 
-| 方法 | 说明 |
-|------|------|
-| `plant->serialize()` | 序列化为二进制数据 |
-| `plant->getTypeName()` | 获取类型名（存入 plantType 字段） |
+// 专注成功后保存记录
+FocusRecord record;
+strcpy(record.plantType, plant->getTypeName().toStdString().c_str());
+record.durationSeconds = minutes * 60;
+record.isSuccess = (state == FocusController::SUCCESS);
+// timestamp 由成员3填充
+dbManager.writeRecord(record);
+
+###供成员4（反作弊）调用
+
+// 检测到作弊时
+controller.onCheatDetected();  // 触发植物枯萎，状态变为 FAILED
 
 ## 可用植物类型
 
@@ -76,6 +98,12 @@ forest_plant/
 | 成长 | 60-120 分钟 | 60% |
 | 成熟 | 120+ 分钟 | 100% |
 
+信号说明（供成员1 UI 使用）
+信号	参数	触发时机
+tick(int seconds)	剩余秒数	每秒一次
+plantUpdated(path, progress, stage)	图片路径、进度、阶段	植物生长/枯萎后
+stateChanged(State)	新状态	状态变化时
+
 ## 编译运行
 
 ### 环境要求
@@ -97,13 +125,7 @@ mingw32-make
 # 运行
 ./release/forest_plant.exe
 
-待完成
-FocusController（专注控制器，番茄钟状态机）
-
-图片资源（由成员1准备）
-
-与成员4（反作弊监控）对接
-
 版本记录
 版本	日期	说明
-v1.0	2026-05-25	植物继承体系 + 工厂模式完成
+v1.0	2026-05-25	植物继承体系 + 工厂模式
+v1.1	2026-06-07	添加 FocusController 专注控制器

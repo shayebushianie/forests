@@ -26,3 +26,9 @@ HEADERS = \
     include/plant/PlantFactory.h \
     include/DatabaseCommon.h \
     include/DatabaseManager.h
+
+SOURCES += \
+    src/controller/FocusController.cpp \
+
+HEADERS += \
+    include/controller/FocusController.h \
