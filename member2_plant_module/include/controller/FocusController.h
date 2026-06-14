@@ -4,6 +4,9 @@
 #include <QObject>
 #include <QTimer>
 #include <QString>
+#include "logic/CoinManager.h"
+#include "logic/AchievementEngine.h"
+#include "logic/StatisticsCalculator.h"
 
 class AbstractPlant;
 
@@ -113,6 +116,9 @@ private:
     int m_remainingSeconds;    ///< 剩余秒数
     int m_totalMinutes;        ///< 本次专注总分钟数（用于生长计算）
     AbstractPlant* m_currentPlant;  ///< 当前种植的植物（控制器拥有）
+    // 新增：当前专注模式（用于金币计算）
+    bool m_isGentleMode;
+    int m_consecutiveDays;
 };
 
 #endif // FOCUSCONTROLLER_H

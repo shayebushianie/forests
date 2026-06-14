@@ -4,20 +4,24 @@
 member2_plant_module/
 ├── include/
 │ ├── plant/ # 植物继承体系
-│ │ ├── AbstractPlant.h # 抽象基类
+│ │ ├── AbstractPlant.h # 抽象基类（第一层）
 │ │ ├── Tree.h # 树类（第二层）
 │ │ ├── Flower.h # 花类（第二层）
-│ │ ├── OakTree.h # 橡树
-│ │ ├── PineTree.h # 松树
-│ │ ├── Rose.h # 玫瑰
-│ │ ├── Sunflower.h # 向日葵
+│ │ ├── OakTree.h # 橡树（第三层）
+│ │ ├── PineTree.h # 松树（第三层）
+│ │ ├── Rose.h # 玫瑰（第三层）
+│ │ ├── Sunflower.h # 向日葵（第三层）
 │ │ └── PlantFactory.h # 植物工厂
-│ └── controller/
-│ └── FocusController.h # 专注控制器
+│ ├── controller/
+│ │ └── FocusController.h # 专注控制器（状态机）
+│ └── logic/ # 业务逻辑层
+│ ├── CoinManager.h # 金币管理器
+│ ├── AchievementEngine.h # 成就引擎
+│ └── StatisticsCalculator.h # 统计计算器
 ├── src/
 │ ├── plant/ # 植物实现
-│ └── controller/
-│ └── FocusController.cpp # 控制器实现
+│ ├── controller/ # 控制器实现
+│ └── logic/ # 业务逻辑实现
 ├── forest_plant.pro # Qt 项目文件
 ├── main.cpp # 测试入口
 └── README.md
@@ -38,6 +42,34 @@ IDLE → FOCUSING → SUCCESS（成功，植物生长）
 ↘ FAILED（失败/作弊，植物枯萎）
 
 
+### 3. 金币系统
+
+| 规则 | 说明 |
+|------|------|
+| 基础奖励 | 专注 1 分钟 = 1 金币 |
+| 温和模式 | 切屏但未枯萎 → 金币折半 |
+| 连续奖励 | 每连续 3 天专注 → 金币 ×1.2（上限 2.0） |
+| 持久化 | 自动保存到 `user_data/coins.dat` |
+
+### 4. 成就系统（5项）
+
+| ID | 名称 | 解锁条件 |
+|:--:|------|----------|
+| 0 | 初试锋芒 | 完成第 1 次专注 |
+| 1 | 持之以恒 | 连续专注 7 天 |
+| 2 | 植物学家 | 解锁所有 4 种植物 |
+| 3 | 专注大师 | 总专注时长达到 100 小时 |
+| 4 | 金币富翁 | 累计获得 1000 金币 |
+
+### 5. 标签统计
+
+| 功能 | 说明 |
+|------|------|
+| 按植物类型统计 | 每种植物的专注时长、会话次数、成功次数 |
+| 总统计 | 总专注时长、总成功次数 |
+| 持久化 | 自动保存到 `user_data/statistics.dat` |
+
+---
 
 ## 接口说明
 
@@ -51,10 +83,19 @@ AbstractPlant* plant = PlantFactory::createPlant("OakTree");
 FocusController controller;
 controller.startFocus(minutes, plant);
 
-// 连接信号（接收状态更新）
+// 连接信号
 connect(&controller, &FocusController::tick, this, &UI::updateTimer);
-connect(&controller, &FocusController::plantUpdated, this, &UI::updatePlantImage);
-connect(&controller, &FocusController::stateChanged, this, &UI::onStateChanged);|
+connect(&controller, &FocusController::plantUpdated, this, &UI::updatePlant);
+connect(&controller, &FocusController::stateChanged, this, &UI::onStateChange);
+
+// 获取金币余额
+int balance = CoinManager::getInstance().getBalance();
+
+// 获取成就列表
+auto achievements = AchievementEngine::getInstance().getAllAchievements();
+
+// 获取统计数据
+int totalMinutes = StatisticsCalculator::getInstance().getTotalMinutes();
 
 ### 供成员3（数据存储）调用
 
@@ -112,20 +153,20 @@ stateChanged(State)	新状态	状态变化时
 
 ### 编译步骤
 
-```bash
-# 进入项目目录
-cd forest_plant
-
-# 生成 Makefile
+cd member2_plant_module
 qmake
-
-# 编译
 mingw32-make
-
-# 运行
 ./release/forest_plant.exe
+
+数据文件说明
+文件路径	说明
+user_data/coins.dat	金币余额
+user_data/achievements.dat	成就进度
+user_data/statistics.dat	标签统计数据
+首次运行时会自动创建 user_data/ 目录和相应文件。
 
 版本记录
 版本	日期	说明
 v1.0	2026-05-25	植物继承体系 + 工厂模式
 v1.1	2026-06-07	添加 FocusController 专注控制器
+v1.2	2026-06-14	添加金币系统、成就系统、标签统计

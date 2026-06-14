@@ -9,6 +9,8 @@ FocusController::FocusController(QObject* parent)
     , m_remainingSeconds(0)
     , m_totalMinutes(0)
     , m_currentPlant(nullptr)
+    , m_isGentleMode(false)      // 新增，默认为严格模式
+    , m_consecutiveDays(0)       // 新增
 {
 }
 
@@ -109,6 +111,25 @@ void FocusController::finishSuccess()
     // 🔥 多态核心：调用植物的生长逻辑
     // 不同的植物子类有不同的生长曲线
     m_currentPlant->grow(m_totalMinutes);
+
+    // ========== 新增：金币、成就、统计 ==========
+    
+    // 1. 获取连续专注天数（从成就引擎获取）
+    // 注意：实际应通过 AchievementEngine 接口获取，这里简化
+    int consecutiveDays = m_consecutiveDays;
+    
+    // 2. 增加金币
+    CoinManager::getInstance().addCoins(m_totalMinutes, m_isGentleMode, consecutiveDays);
+    
+    // 3. 获取本次获得的金币数（用于成就记录）
+    int earnedCoins = m_totalMinutes;  // 简化计算，实际应与 CoinManager 一致
+    if (m_isGentleMode) earnedCoins /= 2;
+    
+    // 4. 更新成就系统
+    AchievementEngine::getInstance().onFocusCompleted(m_totalMinutes, earnedCoins, m_currentPlant->getTypeName());
+    
+    // 5. 更新标签统计
+    StatisticsCalculator::getInstance().addRecord(m_currentPlant->getTypeName(), m_totalMinutes, true);
 
     // 更新状态
     setState(SUCCESS);

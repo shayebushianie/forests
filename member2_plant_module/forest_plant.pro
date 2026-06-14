@@ -13,7 +13,11 @@ SOURCES = \
     src/plant/Rose.cpp \
     src/plant/Sunflower.cpp \
     src/plant/PlantFactory.cpp \
-    src/DatabaseManager.cpp
+    src/DatabaseManager.cpp \
+    src/controller/FocusController.cpp \
+    src/logic/CoinManager.cpp \
+    src/logic/AchievementEngine.cpp \
+    src/logic/StatisticsCalculator.cpp
 
 HEADERS = \
     include/plant/AbstractPlant.h \
@@ -25,10 +29,8 @@ HEADERS = \
     include/plant/Sunflower.h \
     include/plant/PlantFactory.h \
     include/DatabaseCommon.h \
-    include/DatabaseManager.h
-
-SOURCES += \
-    src/controller/FocusController.cpp \
-
-HEADERS += \
+    include/DatabaseManager.h \
     include/controller/FocusController.h \
+    include/logic/CoinManager.h \
+    include/logic/AchievementEngine.h \
+    include/logic/StatisticsCalculator.h
